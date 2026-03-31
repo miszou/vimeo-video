@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Pre-release validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: php-parallel-lint/php-parallel-lint
+
+      - name: PHP syntax check
+        run: parallel-lint --exclude vendor --exclude node_modules .
+
+      - name: Check tag matches plugin version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PLUGIN_VERSION=$(grep -m1 'Version:' mf-vimeo-video.php | sed 's/.*Version:\s*//' | tr -d '[:space:]')
+          README_VERSION=$(grep -m1 'Stable tag:' readme.txt | sed 's/.*Stable tag:\s*//' | tr -d '[:space:]')
+          echo "Tag version:           $TAG"
+          echo "Plugin header version: $PLUGIN_VERSION"
+          echo "Readme stable tag:     $README_VERSION"
+          if [ "$TAG" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Tag v$TAG does not match plugin version $PLUGIN_VERSION"
+            exit 1
+          fi
+          if [ "$TAG" != "$README_VERSION" ]; then
+            echo "::error::Tag v$TAG does not match readme stable tag $README_VERSION"
+            exit 1
+          fi
+
+  release:
+    name: Create release
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin zip
+        run: |
+          mkdir -p build/vimeo-video
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='AGENTS.md' \
+            --exclude='CLAUDE.md' \
+            --exclude='*.log' \
+            --exclude='.DS_Store' \
+            . build/vimeo-video/
+          cd build
+          zip -r "vimeo-video-${{ steps.version.outputs.version }}.zip" vimeo-video/
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Extract the changelog section for this version from readme.txt
+          NOTES=$(awk "/^= ${VERSION} =/{flag=1; next} /^= [0-9]/{if(flag) exit} flag" readme.txt | sed '/^$/d')
+          if [ -z "$NOTES" ]; then
+            NOTES="Release v${VERSION}"
+          fi
+          # Use delimiter for multiline output
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.notes }}
+          files: build/vimeo-video-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: false

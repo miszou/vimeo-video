@@ -1,0 +1,80 @@
+/* Responsive Vimeo embed */
+.mfvv-player {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.mfvv-player iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Horizontal scroll-snap slider */
+.mfvv-slider {
+    display: flex;
+    gap: var(--wp--preset--spacing--40, 30px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--wp--preset--spacing--30, 20px);
+}
+
+.mfvv-slider::-webkit-scrollbar {
+    height: 6px;
+}
+
+.mfvv-slider::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mfvv-slider::-webkit-scrollbar-thumb {
+    background: var(--wp--preset--color--accent-6, rgba(0, 0, 0, 0.2));
+    border-radius: 3px;
+}
+
+.mfvv-slider__card {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: var(--wp--preset--spacing--20, 10px);
+    transition: opacity 0.2s ease;
+}
+
+.mfvv-slider__card:hover {
+    opacity: 0.8;
+}
+
+.mfvv-slider__thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.mfvv-slider__placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 4px;
+    background: var(--wp--preset--color--accent-5, #f5f5f5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wp--preset--color--accent-4, #686868);
+    font-size: 2rem;
+}
+
+.mfvv-slider__title {
+    font-size: var(--wp--preset--font-size--small, 0.875rem);
+    font-weight: 600;
+    line-height: 1.4;
+}

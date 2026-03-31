@@ -1,0 +1,44 @@
+name: Validate Plugin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          tools: php-parallel-lint/php-parallel-lint
+
+      - name: PHP syntax check
+        run: parallel-lint --exclude vendor --exclude node_modules .
+
+  readme:
+    name: Validate readme.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          PLUGIN_VERSION=$(grep -m1 'Version:' mf-vimeo-video.php | sed 's/.*Version:\s*//' | tr -d '[:space:]')
+          README_VERSION=$(grep -m1 'Stable tag:' readme.txt | sed 's/.*Stable tag:\s*//' | tr -d '[:space:]')
+          echo "Plugin header version: $PLUGIN_VERSION"
+          echo "Readme stable tag:     $README_VERSION"
+          if [ "$PLUGIN_VERSION" != "$README_VERSION" ]; then
+            echo "::error::Version mismatch - mf-vimeo-video.php ($PLUGIN_VERSION) ≠ readme.txt ($README_VERSION)"
+            exit 1
+          fi
