@@ -4,7 +4,7 @@ Plugin Name: Vimeo Video CPT
 Plugin URI: https://github.com/miszou/vimeo-video
 GitHub Plugin URI: miszou/vimeo-video
 Description: Registers a Vimeo Video custom post type with Media Tag taxonomy, filterable and searchable via REST API.
-Version: 0.1
+Version: 0.2
 Author: miszou
 Text Domain: mf-vimeo-video
 */

@@ -20,6 +20,9 @@ class MFVV_Template {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ] );
         add_filter( 'get_block_templates', [ $this, 'inject_template' ], 10, 3 );
         add_filter( 'get_block_file_template', [ $this, 'resolve_template' ], 10, 3 );
+
+        // Classic theme fallback: use template_include to load PHP wrapper.
+        add_filter( 'template_include', [ $this, 'classic_template_fallback' ] );
     }
 
     /**
@@ -108,6 +111,29 @@ class MFVV_Template {
         }
 
         return $this->build_template_object();
+    }
+
+    /**
+     * For classic (non-block) themes, override the template for single
+     * mfvv_video posts with our PHP wrapper that renders the block markup.
+     */
+    public function classic_template_fallback( $template ) {
+        if ( ! is_singular( 'mfvv_video' ) ) {
+            return $template;
+        }
+
+        // Block themes already use the block template system — skip.
+        if ( wp_is_block_theme() ) {
+            return $template;
+        }
+
+        $plugin_template = plugin_dir_path( __DIR__ ) . 'templates/single-mfvv_video.php';
+
+        if ( file_exists( $plugin_template ) ) {
+            return $plugin_template;
+        }
+
+        return $template;
     }
 
     public function register_patterns() {
