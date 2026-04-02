@@ -4,7 +4,7 @@ Plugin Name: Vimeo Video CPT
 Plugin URI: https://github.com/miszou/vimeo-video
 GitHub Plugin URI: miszou/vimeo-video
 Description: Registers a Vimeo Video custom post type with Media Tag taxonomy, filterable and searchable via REST API.
-Version: 0.4
+Version: 0.4.1
 Author: miszou
 Text Domain: mf-vimeo-video
 */
@@ -105,8 +105,8 @@ add_action( 'add_meta_boxes', 'mfvv_video_meta_box' );
 function mfvv_video_meta_box_html( $post ) {
     $vimeo_url = get_post_meta( $post->ID, 'mfvv_vimeo_url', true );
     wp_nonce_field( 'mfvv_save_vimeo_url', 'mfvv_vimeo_url_nonce' );
-    echo '<label for="mfvv_vimeo_url">' . esc_html__( 'Vimeo Video URL', 'mf-vimeo-video' ) . '</label>';
-    echo '<input type="url" id="mfvv_vimeo_url" name="mfvv_vimeo_url" value="' .
+    echo '<label for="mfvv_vimeo_url_input">' . esc_html__( 'Vimeo Video URL', 'mf-vimeo-video' ) . '</label>';
+    echo '<input type="url" id="mfvv_vimeo_url_input" name="mfvv_vimeo_url_input" value="' .
         esc_url( $vimeo_url ) .
         '" style="width:100%;margin-bottom:8px" placeholder="https://vimeo.com/123456789" />';
     echo '<button type="button" id="mfvv-fetch-thumb" class="button button-small">' .

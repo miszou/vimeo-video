@@ -3,7 +3,7 @@ Contributors: miszou
 Tags: vimeo, video, cpt, custom-post-type
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 0.4
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,9 @@ Vimeo Video CPT provides a custom post type for managing Vimeo videos in WordPre
 Yes, the plugin supports the block editor and includes REST API exposure.
 
 == Changelog ==
+
+= 0.4.1 =
+* Fix meta box input ID conflict causing fetch thumbnail button to not read the URL field
 
 = 0.4 =
 * Add "Fetch Vimeo Thumbnail" button to manually retrieve and override the featured image

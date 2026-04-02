@@ -1,11 +1,11 @@
 (function () {
-    var btn    = document.getElementById('mfvv-fetch-thumb');
+    var btn = document.getElementById('mfvv-fetch-thumb');
     var status = document.getElementById('mfvv-fetch-status');
 
     if (!btn) return;
 
     btn.addEventListener('click', function () {
-        var url = document.getElementById('mfvv_vimeo_url').value.trim();
+        var url = document.getElementById('mfvv_vimeo_url_input').value.trim();
 
         if (!url) {
             status.textContent = 'Enter a Vimeo URL first.';
