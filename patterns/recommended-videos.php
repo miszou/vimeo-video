@@ -36,8 +36,8 @@ if ( ! $mfvv_related->have_posts() ) {
     return;
 }
 ?>
-<div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--60);padding-bottom:var(--wp--preset--spacing--60)">
-    <h2 class="wp-block-heading alignwide has-small-font-size" style="font-style:normal;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:var(--wp--preset--spacing--40)">
+<div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--60, 3rem);padding-bottom:var(--wp--preset--spacing--60, 3rem)">
+    <h2 class="wp-block-heading alignwide has-small-font-size" style="font-style:normal;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:var(--wp--preset--spacing--40, 1.5rem)">
         <?php esc_html_e( 'Recommended', 'mf-vimeo-video' ); ?>
     </h2>
     <div class="mfvv-slider alignwide">

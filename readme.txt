@@ -3,7 +3,7 @@ Contributors: miszou
 Tags: vimeo, video, cpt, custom-post-type
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 0.2
+Stable tag: 0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Vimeo Video CPT provides a custom post type for managing Vimeo videos in WordPre
 * "Media Tags" taxonomy for organizing and filtering media
 * Meta box for storing Vimeo video URLs
 * REST API support with filtering by media tags
-* Single video template with embedded Vimeo player
+* Single video template with embedded Vimeo player (works with both block and classic themes)
 * Recommended videos slider based on shared media tags
 * Auto-fetch Vimeo thumbnails as featured images
 * GitHub Updater support for automatic updates
@@ -42,6 +42,14 @@ Vimeo Video CPT provides a custom post type for managing Vimeo videos in WordPre
 Yes, the plugin supports the block editor and includes REST API exposure.
 
 == Changelog ==
+
+= 0.3 =
+* Add classic theme support: single video template now works with non-block themes (e.g. TheGem) via template_include fallback
+* Add PHP wrapper template that renders block markup through do_blocks() with get_header/get_footer
+* Enqueue wp-block-library styles in classic theme context so core block classes render correctly
+* Add CSS custom property fallbacks for spacing so layout works without theme.json
+* Add fallback values for all CSS color references (border-color, scrollbar, placeholders)
+* Add mfvv-single class to template for plugin-scoped styling alongside theme container
 
 = 0.2 =
 * Fix invocation of single-video template

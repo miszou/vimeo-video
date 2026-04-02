@@ -1,10 +1,11 @@
 <!-- wp:template-part {"slug":"header"} /-->
 
-<!-- wp:group {"tagName":"main","style":{"spacing":{"margin":{"top":"var:preset|spacing|60"}}},"layout":{"type":"constrained"}} -->
-<main class="wp-block-group" style="margin-top:var(--wp--preset--spacing--60)">
+<!-- wp:group {"tagName":"main","className":"container mfvv-single","style":{"spacing":{"margin":{"top":"var:preset|spacing|60"}}},"layout":{"type":"constrained"}} -->
+<main class="wp-block-group container mfvv-single" style="margin-top:var(--wp--preset--spacing--60)">
 
 	<!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|50","bottom":"var:preset|spacing|40"}}},"layout":{"type":"constrained"}} -->
-	<div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--50);padding-bottom:var(--wp--preset--spacing--40)">
+	<div class="wp-block-group alignwide"
+		style="padding-top:var(--wp--preset--spacing--50);padding-bottom:var(--wp--preset--spacing--40)">
 		<!-- wp:pattern {"slug":"mfvv/vimeo-player"} /-->
 	</div>
 	<!-- /wp:group -->
@@ -15,7 +16,7 @@
 		<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
 		<!-- wp:group {"style":{"spacing":{"padding":{"top":"var:preset|spacing|40"}}},"layout":{"type":"constrained"}} -->
 		<div class="wp-block-group" style="padding-top:var(--wp--preset--spacing--40)">
-			<!-- wp:post-terms {"term":"mfvv_media_tag","separator":"  ","className":"is-style-post-terms-1"} /-->
+			<!-- wp:post-terms {"term":"mfvv_media_tag","separator":"  ","className":"mfvv-meta-tags"} /-->
 		</div>
 		<!-- /wp:group -->
 	</div>

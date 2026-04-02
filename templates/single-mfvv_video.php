@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
+// Ensure core block styles are available for wp-block-group, alignwide, etc.
+wp_enqueue_style( 'wp-block-library' );
+
 $template_file = __DIR__ . '/single-mfvv_video.html';
 
 if ( file_exists( $template_file ) ) {
