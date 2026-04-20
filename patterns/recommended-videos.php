@@ -42,16 +42,23 @@ if ( ! $mfvv_related->have_posts() ) {
     </h2>
     <div class="mfvv-slider alignwide">
         <?php while ( $mfvv_related->have_posts() ) : $mfvv_related->the_post(); ?>
-        <a href="<?php the_permalink(); ?>" class="mfvv-slider__card">
-            <?php if ( has_post_thumbnail() ) : ?>
-                <?php the_post_thumbnail( 'medium_large', [ 'class' => 'mfvv-slider__thumb' ] ); ?>
-            <?php else : ?>
-                <div class="mfvv-slider__placeholder">
-                    <span class="dashicons dashicons-video-alt3"></span>
+        <div class="mfvv-slider__card">
+            <a href="<?php the_permalink(); ?>" class="mfvv-slider__media" aria-hidden="true" tabindex="-1">
+                <?php if ( has_post_thumbnail() ) : ?>
+                    <?php the_post_thumbnail( 'medium_large', [ 'class' => 'mfvv-slider__thumb' ] ); ?>
+                <?php else : ?>
+                    <div class="mfvv-slider__placeholder">
+                        <span class="dashicons dashicons-video-alt3"></span>
+                    </div>
+                <?php endif; ?>
+            </a>
+            <div class="caption">
+                <div class="post-date"><?php echo esc_html( get_the_date() ); ?></div>
+                <div class="title">
+                    <span class="title-h4"><a href="<?php the_permalink(); ?>" rel="bookmark"><?php the_title(); ?></a></span>
                 </div>
-            <?php endif; ?>
-            <span class="mfvv-slider__title"><?php the_title(); ?></span>
-        </a>
+            </div>
+        </div>
         <?php endwhile; ?>
     </div>
 </div>
