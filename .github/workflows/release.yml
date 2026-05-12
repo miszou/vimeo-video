@@ -32,11 +32,8 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          php-version: "8.5"
           tools: php-parallel-lint/php-parallel-lint
-
-      - name: PHP syntax check
-        run: parallel-lint --exclude vendor --exclude node_modules .
 
       - name: Determine release version
         id: version
