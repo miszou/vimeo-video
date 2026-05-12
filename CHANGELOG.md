@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add Videos admin list management improvements: thumbnail and Vimeo URL columns, Media Tag and author filters, sortable Vimeo URL ordering, and a bulk Vimeo thumbnail fetch action.
+- Fix the bulk thumbnail notice format string so it renders without PHP warnings or fatal errors.
+
 ## 0.4.3
 
 - Automated release.
