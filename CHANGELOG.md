@@ -1,17 +1,18 @@
 # Changelog
 
-## 0.4.4
-
-- Automated release.
-
 ## Unreleased
 
+- Add shortcode support for single videos, galleries, and related videos.
+- Add dynamic Gutenberg blocks for Single Vimeo Video, Vimeo Video Gallery, and Related Vimeo Videos.
+- Add width, height, and stretch controls to the Single Vimeo Video block.
+
+## 0.4.4
+
 - Add Videos admin list management improvements: thumbnail and Vimeo URL columns, Media Tag and author filters, sortable Vimeo URL ordering, and a bulk Vimeo thumbnail fetch action.
-- Fix the bulk thumbnail notice format string so it renders without PHP warnings or fatal errors.
 
 ## 0.4.3
 
-- Automated release.
+- Fix the bulk thumbnail notice format string so it renders without PHP warnings or fatal errors.
 
 ## 0.4.2
 
