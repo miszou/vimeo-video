@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.6
+
+- Automated release.
+
 ## 0.4.5
 
 - Automated release.
