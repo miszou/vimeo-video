@@ -75,6 +75,7 @@ function mfvv_register_video_cpt()
             "editor",
             "thumbnail",
             "excerpt",
+            "author",
             "custom-fields",
         ],
         "rewrite" => ["slug" => "videos"],
