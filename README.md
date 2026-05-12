@@ -19,7 +19,7 @@ Core identifiers:
 ## File Structure
 
 ```text
-mf-vimeo-video.php                 Main plugin file: CPT, taxonomy, meta, save hooks, thumbnail fetch, REST filters
+mf-vimeo-video.php                 Main plugin file: CPT, taxonomy, meta, save hooks, thumbnail fetch, admin list tools, REST filters
 includes/class-mfvv-template.php   Template and pattern registration, template injection, CSS enqueueing
 templates/single-mfvv_video.html   Block template markup for single video pages
 templates/single-mfvv_video.php    Classic theme PHP wrapper for the block template
@@ -55,6 +55,18 @@ The video collection supports filtering by media tag slug using the custom query
 ```text
 /wp-json/wp/v2/videos?mfvv_media_tag[]=example-tag
 ```
+
+## Admin Video Management
+
+The Videos list table includes management columns and filters for larger libraries:
+
+- Thumbnail preview column
+- Vimeo URL column with outbound links and sortable meta-value ordering
+- Media Tag admin column and Media Tag filter
+- Author filter
+- Bulk action to fetch Vimeo thumbnails for selected videos
+
+The bulk thumbnail action uses the same `mfvv_fetch_vimeo_thumbnail()` helper as the editor button and reports updated, failed, and skipped counts after it completes.
 
 ## Thumbnail Handling
 

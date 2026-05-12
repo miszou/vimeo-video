@@ -45,6 +45,7 @@ function mfvv_register_media_tag_taxonomy()
             "hierarchical" => false,
             "public" => true,
             "rewrite" => ["slug" => "media-tag"],
+            "show_admin_column" => true,
             "show_in_rest" => true,
         ],
     );
@@ -189,6 +190,290 @@ function mfvv_admin_enqueue($hook)
     ]);
 }
 add_action("admin_enqueue_scripts", "mfvv_admin_enqueue");
+
+// Customize the Videos admin list table with management columns.
+function mfvv_video_admin_columns($columns)
+{
+    $new_columns = [];
+
+    if (isset($columns["cb"])) {
+        $new_columns["cb"] = $columns["cb"];
+    }
+
+    $new_columns["mfvv_thumbnail"] = __("Thumbnail", "mf-vimeo-video");
+
+    if (isset($columns["title"])) {
+        $new_columns["title"] = $columns["title"];
+    }
+
+    $new_columns["mfvv_vimeo_url"] = __("Vimeo URL", "mf-vimeo-video");
+
+    if (isset($columns["taxonomy-mfvv_media_tag"])) {
+        $new_columns["taxonomy-mfvv_media_tag"] =
+            $columns["taxonomy-mfvv_media_tag"];
+    }
+
+    if (isset($columns["author"])) {
+        $new_columns["author"] = $columns["author"];
+    }
+
+    if (isset($columns["date"])) {
+        $new_columns["date"] = $columns["date"];
+    }
+
+    foreach ($columns as $key => $label) {
+        if (!isset($new_columns[$key])) {
+            $new_columns[$key] = $label;
+        }
+    }
+
+    return $new_columns;
+}
+add_filter("manage_mfvv_video_posts_columns", "mfvv_video_admin_columns");
+
+function mfvv_video_admin_column_content($column, $post_id)
+{
+    if ("mfvv_thumbnail" === $column) {
+        if (has_post_thumbnail($post_id)) {
+            echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '">';
+            echo get_the_post_thumbnail($post_id, [64, 64], [
+                "style" => "width:64px;height:64px;object-fit:cover;",
+            ]);
+            echo "</a>";
+        } else {
+            echo esc_html_x("—", "empty admin table column", "mf-vimeo-video");
+        }
+        return;
+    }
+
+    if ("mfvv_vimeo_url" === $column) {
+        $vimeo_url = get_post_meta($post_id, "mfvv_vimeo_url", true);
+        if ($vimeo_url) {
+            echo '<a href="' . esc_url($vimeo_url) . '" target="_blank" rel="noopener noreferrer">' .
+                esc_html(wp_html_excerpt($vimeo_url, 60, "…")) .
+                "</a>";
+        } else {
+            echo esc_html_x("—", "empty admin table column", "mf-vimeo-video");
+        }
+    }
+}
+add_action(
+    "manage_mfvv_video_posts_custom_column",
+    "mfvv_video_admin_column_content",
+    10,
+    2,
+);
+
+function mfvv_video_sortable_admin_columns($columns)
+{
+    $columns["mfvv_vimeo_url"] = "mfvv_vimeo_url";
+    return $columns;
+}
+add_filter(
+    "manage_edit-mfvv_video_sortable_columns",
+    "mfvv_video_sortable_admin_columns",
+);
+
+function mfvv_video_admin_orderby($query)
+{
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    if ("mfvv_video" !== $query->get("post_type")) {
+        return;
+    }
+
+    if ("mfvv_vimeo_url" === $query->get("orderby")) {
+        $query->set("meta_key", "mfvv_vimeo_url");
+        $query->set("orderby", "meta_value");
+    }
+}
+add_action("pre_get_posts", "mfvv_video_admin_orderby");
+
+function mfvv_video_admin_filters($post_type)
+{
+    if ("mfvv_video" !== $post_type) {
+        return;
+    }
+
+    $selected_tag = isset($_GET["mfvv_media_tag_filter"])
+        ? sanitize_text_field(wp_unslash($_GET["mfvv_media_tag_filter"]))
+        : "";
+
+    wp_dropdown_categories([
+        "show_option_all" => __("All Media Tags", "mf-vimeo-video"),
+        "taxonomy" => "mfvv_media_tag",
+        "name" => "mfvv_media_tag_filter",
+        "orderby" => "name",
+        "selected" => $selected_tag,
+        "hierarchical" => false,
+        "depth" => 1,
+        "show_count" => false,
+        "hide_empty" => false,
+        "value_field" => "slug",
+    ]);
+
+    $selected_author = isset($_GET["mfvv_author_filter"])
+        ? absint($_GET["mfvv_author_filter"])
+        : 0;
+
+    wp_dropdown_users([
+        "show_option_all" => __("All Authors", "mf-vimeo-video"),
+        "name" => "mfvv_author_filter",
+        "selected" => $selected_author,
+        "include_selected" => true,
+        "who" => "authors",
+    ]);
+}
+add_action("restrict_manage_posts", "mfvv_video_admin_filters");
+
+function mfvv_video_admin_filter_query($query)
+{
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    if ("mfvv_video" !== $query->get("post_type")) {
+        return;
+    }
+
+    if (!empty($_GET["mfvv_media_tag_filter"])) {
+        $query->set("tax_query", [
+            [
+                "taxonomy" => "mfvv_media_tag",
+                "field" => "slug",
+                "terms" => sanitize_text_field(
+                    wp_unslash($_GET["mfvv_media_tag_filter"]),
+                ),
+            ],
+        ]);
+    }
+
+    if (!empty($_GET["mfvv_author_filter"])) {
+        $query->set("author", absint($_GET["mfvv_author_filter"]));
+    }
+}
+add_action("pre_get_posts", "mfvv_video_admin_filter_query");
+
+function mfvv_video_admin_column_styles()
+{
+    $screen = get_current_screen();
+    if (
+        !$screen ||
+        "edit-mfvv_video" !== $screen->id ||
+        "mfvv_video" !== $screen->post_type
+    ) {
+        return;
+    }
+
+    echo '<style>.fixed .column-mfvv_thumbnail{width:88px}.fixed .column-mfvv_vimeo_url{width:22%}</style>';
+}
+add_action("admin_head", "mfvv_video_admin_column_styles");
+
+function mfvv_video_bulk_actions($bulk_actions)
+{
+    $bulk_actions["mfvv_fetch_thumbnails"] = __(
+        "Fetch Vimeo thumbnails",
+        "mf-vimeo-video",
+    );
+    return $bulk_actions;
+}
+add_filter("bulk_actions-edit-mfvv_video", "mfvv_video_bulk_actions");
+
+function mfvv_video_handle_bulk_actions($redirect_url, $action, $post_ids)
+{
+    if ("mfvv_fetch_thumbnails" !== $action) {
+        return $redirect_url;
+    }
+
+    $updated = 0;
+    $failed = 0;
+    $skipped = 0;
+
+    foreach ((array) $post_ids as $post_id) {
+        $post_id = absint($post_id);
+        if (!$post_id || !current_user_can("edit_post", $post_id)) {
+            $skipped++;
+            continue;
+        }
+
+        $vimeo_url = get_post_meta($post_id, "mfvv_vimeo_url", true);
+        if (!$vimeo_url) {
+            $skipped++;
+            continue;
+        }
+
+        $attachment_id = mfvv_fetch_vimeo_thumbnail($post_id, $vimeo_url);
+        if (is_wp_error($attachment_id)) {
+            mfvv_log_thumbnail_error($post_id, $attachment_id);
+            $failed++;
+            continue;
+        }
+
+        $updated++;
+    }
+
+    return add_query_arg(
+        [
+            "mfvv_bulk_thumbnails" => 1,
+            "mfvv_updated" => $updated,
+            "mfvv_failed" => $failed,
+            "mfvv_skipped" => $skipped,
+        ],
+        remove_query_arg(
+            [
+                "mfvv_bulk_thumbnails",
+                "mfvv_updated",
+                "mfvv_failed",
+                "mfvv_skipped",
+            ],
+            $redirect_url,
+        ),
+    );
+}
+add_filter(
+    "handle_bulk_actions-edit-mfvv_video",
+    "mfvv_video_handle_bulk_actions",
+    10,
+    3,
+);
+
+function mfvv_video_bulk_action_notice()
+{
+    if (empty($_GET["mfvv_bulk_thumbnails"])) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    if (!$screen || "edit-mfvv_video" !== $screen->id) {
+        return;
+    }
+
+    $updated = isset($_GET["mfvv_updated"])
+        ? absint($_GET["mfvv_updated"])
+        : 0;
+    $failed = isset($_GET["mfvv_failed"]) ? absint($_GET["mfvv_failed"]) : 0;
+    $skipped = isset($_GET["mfvv_skipped"])
+        ? absint($_GET["mfvv_skipped"])
+        : 0;
+
+    printf(
+        '<div class="notice notice-info is-dismissible"><p>%s</p></div>',
+        esc_html(
+            sprintf(
+                __(
+                    'Vimeo thumbnail bulk action complete. Updated: %1$d. Failed: %2$d. Skipped: %3$d.',
+                    "mf-vimeo-video",
+                ),
+                $updated,
+                $failed,
+                $skipped,
+            ),
+        ),
+    );
+}
+add_action("admin_notices", "mfvv_video_bulk_action_notice");
 
 // AJAX handler: fetch Vimeo thumbnail and set as featured image
 function mfvv_ajax_fetch_thumbnail()

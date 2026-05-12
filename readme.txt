@@ -21,6 +21,7 @@ Features include:
 * Organize videos with Media Tags
 * Show recommended videos based on shared Media Tags
 * Fetch Vimeo thumbnails and set them as featured images
+* Manage video libraries with thumbnail and Vimeo URL columns, Media Tag and author filters, and a bulk thumbnail fetch action
 * Assign video posts to different authors
 * Use with block themes and classic themes
 * Receive plugin updates through Git Updater-compatible metadata
@@ -52,6 +53,10 @@ Yes. Use Media Tags to organize videos and power the recommended videos section.
 = Will the plugin create thumbnails automatically? =
 
 The plugin can fetch a Vimeo thumbnail and set it as the featured image when Vimeo provides a thumbnail for the video. You can also set or replace the featured image manually in WordPress.
+
+= Can I fetch thumbnails for multiple videos at once? =
+
+Yes. On the Videos admin list screen, select videos, choose the Fetch Vimeo thumbnails bulk action, and apply it. Videos without a Vimeo URL are skipped, and Vimeo access errors are counted as failures.
 
 = Why did thumbnail fetching fail for my video? =
 
