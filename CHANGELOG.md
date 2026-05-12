@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+
+- Automated release.
+
 ## 0.4.2
 
 - Improve thumbnail fetch messages for private, restricted, and missing-thumbnail Vimeo videos.
