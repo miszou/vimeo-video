@@ -4,7 +4,7 @@ Plugin Name: Vimeo Video CPT
 Plugin URI: https://github.com/miszou/vimeo-video
 GitHub Plugin URI: miszou/vimeo-video
 Description: Registers a Vimeo Video custom post type with Media Tag taxonomy, filterable and searchable via REST API.
-Version: 0.4.1
+Version: 0.4.3
 Author: miszou
 Text Domain: mf-vimeo-video
 */
@@ -128,15 +128,18 @@ function mfvv_save_vimeo_url( $post_id ) {
         return;
     }
 
-    if ( isset( $_POST['mfvv_vimeo_url'] ) ) {
-        $new_url = esc_url_raw( wp_unslash( $_POST['mfvv_vimeo_url'] ) );
+    if ( isset( $_POST['mfvv_vimeo_url_input'] ) ) {
+        $new_url = esc_url_raw( wp_unslash( $_POST['mfvv_vimeo_url_input'] ) );
         $old_url = get_post_meta( $post_id, 'mfvv_vimeo_url', true );
 
         update_post_meta( $post_id, 'mfvv_vimeo_url', $new_url );
 
-        // Auto-fetch Vimeo thumbnail when URL changes and no featured image is set
+        // Auto-fetch Vimeo thumbnail when URL changes and no featured image is set.
         if ( $new_url && $new_url !== $old_url && ! has_post_thumbnail( $post_id ) ) {
-            mfvv_fetch_vimeo_thumbnail( $post_id, $new_url );
+            $thumbnail_result = mfvv_fetch_vimeo_thumbnail( $post_id, $new_url );
+            if ( is_wp_error( $thumbnail_result ) ) {
+                mfvv_log_thumbnail_error( $post_id, $thumbnail_result );
+            }
         }
     }
 }
@@ -150,7 +153,7 @@ function mfvv_admin_enqueue( $hook ) {
     if ( get_post_type() !== 'mfvv_video' ) {
         return;
     }
-    wp_enqueue_script( 'mfvv-admin', plugins_url( 'assets/js/admin.js', __FILE__ ), [], '0.3', true );
+    wp_enqueue_script( 'mfvv-admin', plugins_url( 'assets/js/admin.js', __FILE__ ), [ 'wp-data' ], '0.4.3', true );
     wp_localize_script( 'mfvv-admin', 'mfvvAdmin', [
         'ajaxUrl' => admin_url( 'admin-ajax.php' ),
         'nonce'   => wp_create_nonce( 'mfvv_fetch_thumbnail' ),
@@ -170,44 +173,83 @@ function mfvv_ajax_fetch_thumbnail() {
         wp_send_json_error( __( 'Invalid request.', 'mf-vimeo-video' ) );
     }
 
-    mfvv_fetch_vimeo_thumbnail( $post_id, $vimeo_url );
+    $attachment_id = mfvv_fetch_vimeo_thumbnail( $post_id, $vimeo_url );
 
-    if ( has_post_thumbnail( $post_id ) ) {
-        wp_send_json_success( __( 'Thumbnail updated.', 'mf-vimeo-video' ) );
-    } else {
-        wp_send_json_error( __( 'Could not fetch thumbnail from Vimeo.', 'mf-vimeo-video' ) );
+    if ( is_wp_error( $attachment_id ) ) {
+        mfvv_log_thumbnail_error( $post_id, $attachment_id );
+        wp_send_json_error( $attachment_id->get_error_message() );
     }
+
+    wp_send_json_success( [
+        'message'       => __( 'Thumbnail updated.', 'mf-vimeo-video' ),
+        'attachment_id' => $attachment_id,
+        'thumbnail_url' => wp_get_attachment_image_url( $attachment_id, 'thumbnail' ),
+    ] );
 }
 add_action( 'wp_ajax_mfvv_fetch_thumbnail', 'mfvv_ajax_fetch_thumbnail' );
 
-// Fetch Vimeo thumbnail via oEmbed and set as featured image
+// Fetch Vimeo thumbnail via oEmbed and set as featured image.
 function mfvv_fetch_vimeo_thumbnail( $post_id, $vimeo_url ) {
-    $oembed_url = 'https://vimeo.com/api/oembed.json?url=' . urlencode( $vimeo_url );
-    $response   = wp_remote_get( $oembed_url, [ 'timeout' => 10 ] );
+    $oembed_url = 'https://vimeo.com/api/oembed.json?url=' . rawurlencode( $vimeo_url );
+    $response   = wp_remote_get( $oembed_url, [
+        'timeout'     => 15,
+        'redirection' => 5,
+        'user-agent'  => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url( '/' ),
+    ] );
 
-    if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-        return;
+    if ( is_wp_error( $response ) ) {
+        return new WP_Error(
+            'mfvv_oembed_request_failed',
+            sprintf( __( 'Vimeo oEmbed request failed: %s', 'mf-vimeo-video' ), $response->get_error_message() )
+        );
     }
 
-    $data = json_decode( wp_remote_retrieve_body( $response ), true );
+    $response_code = wp_remote_retrieve_response_code( $response );
+    $response_body = wp_remote_retrieve_body( $response );
+    if ( 200 !== $response_code ) {
+        return new WP_Error(
+            'mfvv_oembed_bad_response',
+            mfvv_get_vimeo_oembed_error_message( $response_code, $response_body )
+        );
+    }
+
+    $data = json_decode( $response_body, true );
+
+    if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) ) {
+        return new WP_Error( 'mfvv_oembed_invalid_json', __( 'Vimeo oEmbed returned invalid JSON.', 'mf-vimeo-video' ) );
+    }
 
     if ( empty( $data['thumbnail_url'] ) ) {
-        return;
+        return new WP_Error(
+            'mfvv_oembed_missing_thumbnail',
+            __( 'Vimeo returned video metadata, but no thumbnail URL. Add or regenerate the video thumbnail/poster in Vimeo, then try again; otherwise set the featured image manually in WordPress.', 'mf-vimeo-video' )
+        );
     }
 
-    // Download and sideload the thumbnail into the media library
+    // Download and sideload the thumbnail into the media library.
     require_once ABSPATH . 'wp-admin/includes/media.php';
     require_once ABSPATH . 'wp-admin/includes/file.php';
     require_once ABSPATH . 'wp-admin/includes/image.php';
 
-    $tmp_file = download_url( $data['thumbnail_url'] );
+    $tmp_file = download_url( esc_url_raw( $data['thumbnail_url'] ), 15 );
 
     if ( is_wp_error( $tmp_file ) ) {
-        return;
+        return new WP_Error(
+            'mfvv_thumbnail_download_failed',
+            sprintf( __( 'Thumbnail download failed: %s', 'mf-vimeo-video' ), $tmp_file->get_error_message() )
+        );
+    }
+
+    $path      = wp_parse_url( $data['thumbnail_url'], PHP_URL_PATH );
+    $extension = pathinfo( (string) $path, PATHINFO_EXTENSION );
+    $extension = $extension ? strtolower( $extension ) : 'jpg';
+
+    if ( ! in_array( $extension, [ 'jpg', 'jpeg', 'png', 'webp' ], true ) ) {
+        $extension = 'jpg';
     }
 
     $file_array = [
-        'name'     => sanitize_file_name( get_the_title( $post_id ) ) . '.jpg',
+        'name'     => sanitize_file_name( get_the_title( $post_id ) . '-vimeo-thumbnail.' . $extension ),
         'tmp_name' => $tmp_file,
     ];
 
@@ -215,10 +257,58 @@ function mfvv_fetch_vimeo_thumbnail( $post_id, $vimeo_url ) {
 
     if ( is_wp_error( $attachment_id ) ) {
         @unlink( $tmp_file );
-        return;
+        return new WP_Error(
+            'mfvv_thumbnail_sideload_failed',
+            sprintf( __( 'Could not add thumbnail to the media library: %s', 'mf-vimeo-video' ), $attachment_id->get_error_message() )
+        );
     }
 
-    set_post_thumbnail( $post_id, $attachment_id );
+    if ( ! set_post_thumbnail( $post_id, $attachment_id ) ) {
+        wp_delete_attachment( $attachment_id, true );
+        return new WP_Error( 'mfvv_set_thumbnail_failed', __( 'Could not set the downloaded image as the featured image.', 'mf-vimeo-video' ) );
+    }
+
+    return $attachment_id;
+}
+
+function mfvv_get_vimeo_oembed_error_message( $response_code, $response_body ) {
+    $vimeo_message = '';
+    $decoded_body  = json_decode( $response_body, true );
+
+    if ( is_array( $decoded_body ) ) {
+        if ( ! empty( $decoded_body['message'] ) ) {
+            $vimeo_message = sanitize_text_field( $decoded_body['message'] );
+        } elseif ( ! empty( $decoded_body['error'] ) ) {
+            $vimeo_message = sanitize_text_field( $decoded_body['error'] );
+        }
+    }
+
+    if ( in_array( (int) $response_code, [ 401, 403 ], true ) ) {
+        return sprintf(
+            __( 'Vimeo denied access to this video (HTTP %1$d). The video is likely private, password-protected, domain-restricted, or not allowed to be embedded. Make it public/unlisted with oEmbed access, or set the featured image manually.%2$s', 'mf-vimeo-video' ),
+            $response_code,
+            $vimeo_message ? ' ' . sprintf( __( 'Vimeo says: %s', 'mf-vimeo-video' ), $vimeo_message ) : ''
+        );
+    }
+
+    if ( 404 === (int) $response_code ) {
+        return sprintf(
+            __( 'Vimeo could not find or access this video via oEmbed (HTTP 404). If the URL is correct, the video is likely private, deleted, password-protected, domain-restricted, or disabled for embedding. Make it accessible in Vimeo privacy/embed settings, or set the featured image manually.%s', 'mf-vimeo-video' ),
+            $vimeo_message ? ' ' . sprintf( __( 'Vimeo says: %s', 'mf-vimeo-video' ), $vimeo_message ) : ''
+        );
+    }
+
+    return sprintf(
+        __( 'Vimeo oEmbed returned HTTP %1$d, so the thumbnail could not be retrieved.%2$s', 'mf-vimeo-video' ),
+        $response_code,
+        $vimeo_message ? ' ' . sprintf( __( 'Vimeo says: %s', 'mf-vimeo-video' ), $vimeo_message ) : ''
+    );
+}
+
+function mfvv_log_thumbnail_error( $post_id, WP_Error $error ) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( sprintf( 'Vimeo Video thumbnail fetch failed for post %d: [%s] %s', $post_id, $error->get_error_code(), $error->get_error_message() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+    }
 }
 
 // Enable filtering by media_tag in REST API queries

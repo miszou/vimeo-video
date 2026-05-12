@@ -27,12 +27,17 @@
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 if (res.success) {
-                    status.textContent = res.data;
+                    var attachmentId = res.data && res.data.attachment_id ? parseInt(res.data.attachment_id, 10) : 0;
+
+                    status.textContent = (res.data && res.data.message) || 'Thumbnail updated.';
                     status.style.color = '#00a32a';
-                    // Refresh the featured image metabox
-                    if (wp && wp.data && wp.data.dispatch) {
-                        wp.data.dispatch('core/editor').editPost({ featured_media: 0 });
+
+                    // Keep the block editor state in sync. Setting this to 0 removes the
+                    // featured image on the next save, so only write the new attachment ID.
+                    if (attachmentId && typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                        wp.data.dispatch('core/editor').editPost({ featured_media: attachmentId });
                         wp.data.dispatch('core').invalidateResolution('getEntityRecord', ['postType', 'mfvv_video', mfvvAdmin.postId]);
+                        wp.data.dispatch('core').invalidateResolution('getMedia', [attachmentId]);
                     }
                 } else {
                     status.textContent = res.data || 'Error fetching thumbnail.';
