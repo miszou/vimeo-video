@@ -13,8 +13,14 @@ if (!defined("ABSPATH")) {
     exit();
 }
 
+require_once __DIR__ . "/includes/class-mfvv-render.php";
 require_once __DIR__ . "/includes/class-mfvv-template.php";
+require_once __DIR__ . "/includes/class-mfvv-shortcodes.php";
+require_once __DIR__ . "/includes/class-mfvv-blocks.php";
+
 MFVV_Template::init();
+MFVV_Shortcodes::init();
+MFVV_Blocks::init();
 
 // Flush rewrite rules on activation so video URLs work immediately
 function mfvv_activate()

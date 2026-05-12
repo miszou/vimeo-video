@@ -1,4 +1,4 @@
-=== Vimeo Video CPT ===
+=== Vimeo Video ===
 Contributors: miszou
 Tags: vimeo, video, custom-post-type
 Requires at least: 6.4
@@ -11,7 +11,7 @@ Create and display Vimeo video posts in WordPress with featured images, media ta
 
 == Description ==
 
-Vimeo Video CPT adds a dedicated Videos section to WordPress so you can manage Vimeo videos as their own content type.
+Vimeo Video adds a dedicated Videos section to WordPress so you can manage Vimeo videos as their own content type.
 
 Features include:
 
@@ -22,6 +22,9 @@ Features include:
 * Show recommended videos based on shared Media Tags
 * Fetch Vimeo thumbnails and set them as featured images
 * Manage video libraries with thumbnail and Vimeo URL columns, Media Tag and author filters, and a bulk thumbnail fetch action
+* Embed videos and galleries with shortcodes in classic content, widgets, and page builders
+* Add dynamic Single Vimeo Video, Vimeo Video Gallery, and Related Vimeo Videos blocks in the block editor
+* Control Single Vimeo Video block width, height, and stretch-to-container display
 * Assign video posts to different authors
 * Use with block themes and classic themes
 * Receive plugin updates through Git Updater-compatible metadata
@@ -64,8 +67,12 @@ Vimeo may not provide a thumbnail when a video is private, password-protected, d
 
 = Does this work with the block editor? =
 
-Yes. The plugin works with the WordPress block editor and includes a single video layout for video pages.
+Yes. The plugin works with the WordPress block editor, includes a single video layout for video pages, and provides dynamic blocks for a single Vimeo video, video galleries, and related videos. The Single Vimeo Video block includes width, height, and stretch controls.
 
 = Does this work with classic themes? =
 
 Yes. The single video page also works with classic themes through the plugin's fallback template.
+
+= Which shortcodes are available? =
+
+Use `[mfvv_video id="123"]` to embed one video, `[mfvv_gallery tag="training" posts_per_page="6" columns="3"]` to show a gallery, and `[mfvv_related_videos id="123"]` to show videos with shared Media Tags.
