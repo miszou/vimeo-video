@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4
+
+- Automated release.
+
 ## Unreleased
 
 - Add Videos admin list management improvements: thumbnail and Vimeo URL columns, Media Tag and author filters, sortable Vimeo URL ordering, and a bulk Vimeo thumbnail fetch action.
