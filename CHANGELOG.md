@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.5
+
+- Automated release.
+
 ## Unreleased
 
 - Add shortcode support for single videos, galleries, and related videos.

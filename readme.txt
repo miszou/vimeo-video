@@ -3,7 +3,7 @@ Contributors: miszou
 Tags: vimeo, video, custom-post-type
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 0.4.4
+Stable tag: 0.4.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
