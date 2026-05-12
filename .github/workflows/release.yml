@@ -2,91 +2,192 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to use, without the leading v. Leave empty to bump the patch version."
+        required: false
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
 jobs:
-  validate:
-    name: Pre-release validation
+  release:
+    name: Lint, bump version, tag, and release
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           tools: php-parallel-lint/php-parallel-lint
 
       - name: PHP syntax check
         run: parallel-lint --exclude vendor --exclude node_modules .
 
-      - name: Check tag matches plugin version
+      - name: Determine release version
+        id: version
+        shell: bash
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          PLUGIN_VERSION=$(grep -m1 'Version:' mf-vimeo-video.php | sed 's/.*Version:\s*//' | tr -d '[:space:]')
-          README_VERSION=$(grep -m1 'Stable tag:' readme.txt | sed 's/.*Stable tag:\s*//' | tr -d '[:space:]')
-          echo "Tag version:           $TAG"
+          set -euo pipefail
+
+          CURRENT_VERSION=$(grep -m1 'Version:' mf-vimeo-video.php | sed 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          README_VERSION=$(grep -m1 'Stable tag:' readme.txt | sed 's/.*Stable tag:[[:space:]]*//' | tr -d '[:space:]')
+
+          if [ "$CURRENT_VERSION" != "$README_VERSION" ]; then
+            echo "::error::Version mismatch before release: mf-vimeo-video.php ($CURRENT_VERSION) != readme.txt ($README_VERSION)"
+            exit 1
+          fi
+
+          REQUESTED_VERSION="${{ github.event.inputs.version || '' }}"
+
+          if [ -n "$REQUESTED_VERSION" ]; then
+            NEXT_VERSION="$REQUESTED_VERSION"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+            if [ -z "${MAJOR:-}" ] || [ -z "${MINOR:-}" ] || [ -z "${PATCH:-}" ]; then
+              echo "::error::Current version '$CURRENT_VERSION' is not a semantic version in MAJOR.MINOR.PATCH format."
+              exit 1
+            fi
+            NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+
+          if ! [[ "$NEXT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release version '$NEXT_VERSION' must use MAJOR.MINOR.PATCH format."
+            exit 1
+          fi
+
+          if git rev-parse "v$NEXT_VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag v$NEXT_VERSION already exists."
+            exit 1
+          fi
+
+          echo "current=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update plugin version files
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.next }}"
+
+          perl -0pi -e "s/Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" mf-vimeo-video.php
+          perl -0pi -e "s/Stable tag:\s*\K[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" readme.txt
+
+          if ! grep -q "^## $VERSION$" CHANGELOG.md; then
+            awk -v version="$VERSION" '
+              NR == 1 {
+                print
+                print ""
+                print "## " version
+                print ""
+                print "- Automated release."
+                inserted=1
+                next
+              }
+              { print }
+              END {
+                if (!inserted) {
+                  exit 1
+                }
+              }
+            ' CHANGELOG.md > CHANGELOG.md.tmp
+            mv CHANGELOG.md.tmp CHANGELOG.md
+          fi
+
+      - name: Verify version update
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.next }}"
+          PLUGIN_VERSION=$(grep -m1 'Version:' mf-vimeo-video.php | sed 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          README_VERSION=$(grep -m1 'Stable tag:' readme.txt | sed 's/.*Stable tag:[[:space:]]*//' | tr -d '[:space:]')
+
           echo "Plugin header version: $PLUGIN_VERSION"
           echo "Readme stable tag:     $README_VERSION"
-          if [ "$TAG" != "$PLUGIN_VERSION" ]; then
-            echo "::error::Tag v$TAG does not match plugin version $PLUGIN_VERSION"
-            exit 1
-          fi
-          if [ "$TAG" != "$README_VERSION" ]; then
-            echo "::error::Tag v$TAG does not match readme stable tag $README_VERSION"
+
+          if [ "$PLUGIN_VERSION" != "$VERSION" ] || [ "$README_VERSION" != "$VERSION" ]; then
+            echo "::error::Version update failed."
             exit 1
           fi
 
-  release:
-    name: Create release
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          if ! grep -q "^## $VERSION$" CHANGELOG.md; then
+            echo "::error::Missing changelog entry for $VERSION."
+            exit 1
+          fi
 
-      - name: Get version from tag
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      - name: Commit version bump
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.next }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mf-vimeo-video.php readme.txt CHANGELOG.md
+          git commit -m "chore(release): bump version to $VERSION"
+          git push origin HEAD:main
+
+      - name: Create and push tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
 
       - name: Build plugin zip
+        shell: bash
         run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.next }}"
           mkdir -p build/vimeo-video
           rsync -av \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.gitignore' \
+            --exclude='build' \
             --exclude='node_modules' \
-            --exclude='AGENTS.md' \
-            --exclude='CLAUDE.md' \
             --exclude='*.log' \
             --exclude='.DS_Store' \
             . build/vimeo-video/
           cd build
-          zip -r "vimeo-video-${{ steps.version.outputs.version }}.zip" vimeo-video/
+          zip -r "vimeo-video-$VERSION.zip" vimeo-video/
 
-      - name: Extract changelog for this version
-        id: changelog
+      - name: Extract changelog notes
+        shell: bash
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          # Extract the changelog section for this version from readme.txt
-          NOTES=$(awk "/^= ${VERSION} =/{flag=1; next} /^= [0-9]/{if(flag) exit} flag" readme.txt | sed '/^$/d')
-          if [ -z "$NOTES" ]; then
-            NOTES="Release v${VERSION}"
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.next }}"
+          awk -v version="$VERSION" '
+            $0 == "## " version { flag=1; next }
+            /^## / && flag { exit }
+            flag { print }
+          ' CHANGELOG.md | sed '/^[[:space:]]*$/d' > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "Release ${{ steps.version.outputs.tag }}" > release-notes.md
           fi
-          # Use delimiter for multiline output
-          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$NOTES" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          name: v${{ steps.version.outputs.version }}
-          body: ${{ steps.changelog.outputs.notes }}
-          files: build/vimeo-video-${{ steps.version.outputs.version }}.zip
-          generate_release_notes: false
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          body_path: release-notes.md
+          files: build/vimeo-video-${{ steps.version.outputs.next }}.zip
+          generate_release_notes: true
