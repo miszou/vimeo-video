@@ -1,79 +1,66 @@
 === Vimeo Video CPT ===
 Contributors: miszou
-Tags: vimeo, video, cpt, custom-post-type
+Tags: vimeo, video, custom-post-type
 Requires at least: 6.4
 Tested up to: 6.9
 Stable tag: 0.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Registers a Vimeo Video custom post type with Media Tag taxonomy, filterable and searchable via REST API.
+Create and display Vimeo video posts in WordPress with featured images, media tags, author assignment, and related videos.
 
 == Description ==
 
-Vimeo Video CPT provides a custom post type for managing Vimeo videos in WordPress. It includes:
+Vimeo Video CPT adds a dedicated Videos section to WordPress so you can manage Vimeo videos as their own content type.
 
-* Custom post type "Video" (mfvv_video) with archive support
-* "Media Tags" taxonomy for organizing and filtering media
-* Meta box for storing Vimeo video URLs
-* REST API support with filtering by media tags
-* Single video template with embedded Vimeo player (works with both block and classic themes)
-* Recommended videos slider based on shared media tags
-* Auto-fetch Vimeo thumbnails as featured images
-* GitHub Updater support for automatic updates
+Features include:
+
+* Add Vimeo videos from the WordPress admin
+* Store a Vimeo video URL for each video post
+* Display a responsive Vimeo player on single video pages
+* Organize videos with Media Tags
+* Show recommended videos based on shared Media Tags
+* Fetch Vimeo thumbnails and set them as featured images
+* Assign video posts to different authors
+* Use with block themes and classic themes
+* Receive plugin updates through Git Updater-compatible metadata
 
 == Installation ==
 
-1. Upload the plugin folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. A new "Videos" post type will appear in your admin menu
+1. Upload the plugin folder to the `/wp-content/plugins/` directory.
+2. Activate the plugin through the Plugins menu in WordPress.
+3. A new Videos menu item will appear in your WordPress admin.
 
 == Frequently Asked Questions ==
 
 = How do I add a Vimeo video? =
 
-1. Go to Videos > Add New
-2. Enter a title for your video
-3. In the "Vimeo Video URL" meta box, enter your Vimeo URL (e.g., https://vimeo.com/123456789)
-4. Publish your video
+1. Go to Videos > Add New.
+2. Enter a title for your video.
+3. Add the Vimeo URL in the Vimeo Video URL box.
+4. Optionally add Media Tags, a featured image, excerpt, and author.
+5. Publish the video.
 
-= Can I use this with the block editor? =
+= Can I change the author of a video? =
 
-Yes, the plugin supports the block editor and includes REST API exposure.
+Yes. Video posts support WordPress author assignment. You can change the author from the video editor or Quick Edit when your user account has permission to edit authors.
 
-== Changelog ==
+= Can I organize videos by topic? =
 
-= 0.4.2 =
-* Add more specific thumbnail fetch messages for private/restricted Vimeo videos and videos without a Vimeo thumbnail URL
-* Fix manual thumbnail refresh incorrectly clearing the featured image in the block editor
-* Fix auto-fetch on save by reading the correct Vimeo URL field name
-* Return detailed thumbnail fetch errors for easier debugging
-* Log thumbnail fetch failures when WP_DEBUG is enabled
+Yes. Use Media Tags to organize videos and power the recommended videos section.
 
-= 0.4.1 =
-* Fix meta box input ID conflict causing fetch thumbnail button to not read the URL field
+= Will the plugin create thumbnails automatically? =
 
-= 0.4 =
-* Add "Fetch Vimeo Thumbnail" button to manually retrieve and override the featured image
-* AJAX-powered thumbnail fetch — works without saving the post first
+The plugin can fetch a Vimeo thumbnail and set it as the featured image when Vimeo provides a thumbnail for the video. You can also set or replace the featured image manually in WordPress.
 
-= 0.3 =
-* Add classic theme support: single video template now works with non-block themes (e.g. TheGem) via template_include fallback
-* Add PHP wrapper template that renders block markup through do_blocks() with get_header/get_footer
-* Enqueue wp-block-library styles in classic theme context so core block classes render correctly
-* Add CSS custom property fallbacks for spacing so layout works without theme.json
-* Add fallback values for all CSS color references (border-color, scrollbar, placeholders)
-* Add mfvv-single class to template for plugin-scoped styling alongside theme container
+= Why did thumbnail fetching fail for my video? =
 
-= 0.2 =
-* Fix invocation of single-video template
+Vimeo may not provide a thumbnail when a video is private, password-protected, deleted, restricted from embedding, or missing thumbnail data. In that case, set the featured image manually in WordPress.
 
-= 0.1 =
-* Initial release
-* Custom post type "Video" with archive
-* Media Tags taxonomy
-* Vimeo URL meta box
-* Single video template with Vimeo oEmbed player
-* Recommended videos slider based on shared media tags
-* REST API filtering by media tag
-* Auto-fetch Vimeo thumbnail as featured image on URL save
+= Does this work with the block editor? =
+
+Yes. The plugin works with the WordPress block editor and includes a single video layout for video pages.
+
+= Does this work with classic themes? =
+
+Yes. The single video page also works with classic themes through the plugin's fallback template.
