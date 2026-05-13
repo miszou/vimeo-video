@@ -15,7 +15,7 @@ class MFVV_Blocks {
             'mfvv-blocks-editor',
             plugins_url( 'assets/js/blocks.js', __DIR__ ),
             [ 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-server-side-render' ],
-            '0.1',
+            '0.4.7',
             true
         );
 
@@ -23,7 +23,7 @@ class MFVV_Blocks {
             'mfvv-shortcodes-blocks',
             plugins_url( 'assets/css/shortcodes-blocks.css', __DIR__ ),
             [],
-            '0.1'
+            '0.4.7'
         );
 
         register_block_type( 'mfvv/video', [

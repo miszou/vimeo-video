@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.7
+
+- Fix single video pages in classic themes such as TheGem by rendering the Vimeo player and recommendations with dynamic blocks instead of dynamic PHP block patterns.
+- Improve responsive player styling for the dynamic video block on single video pages.
+
 ## 0.4.6
 
 - Automated release.

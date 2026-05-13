@@ -15,7 +15,8 @@
 }
 
 /* Responsive Vimeo embed */
-.mfvv-player {
+.mfvv-player,
+.mfvv-single .mfvv-video-embed {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -23,7 +24,8 @@
     border-radius: 4px;
 }
 
-.mfvv-player iframe {
+.mfvv-player iframe,
+.mfvv-single .mfvv-video-embed iframe {
     position: absolute;
     top: 0;
     left: 0;

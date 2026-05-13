@@ -3,7 +3,7 @@ Contributors: miszou
 Tags: vimeo, video, custom-post-type
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 0.4.6
+Stable tag: 0.4.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -71,7 +71,7 @@ Yes. The plugin works with the WordPress block editor, includes a single video l
 
 = Does this work with classic themes? =
 
-Yes. The single video page also works with classic themes through the plugin's fallback template.
+Yes. The single video page also works with classic themes through the plugin's fallback template. The fallback renders the Vimeo player and related videos through dynamic blocks for compatibility with classic themes such as TheGem.
 
 = Which shortcodes are available? =
 

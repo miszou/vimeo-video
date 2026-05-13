@@ -63,7 +63,7 @@ Replace the example number or tag with the video or Media Tag you want to show.
 
 ## Good to know
 
-- The plugin works with both block themes and classic themes.
+- The plugin works with both block themes and classic themes, including classic themes such as TheGem.
 - Videos can be assigned to different WordPress authors.
 - Private, password-protected, deleted, or restricted Vimeo videos may not show a thumbnail or player correctly.
 - If Vimeo does not allow a thumbnail to be fetched, set the featured image manually.

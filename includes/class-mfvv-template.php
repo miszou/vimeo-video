@@ -161,7 +161,7 @@ class MFVV_Template {
             'mfvv-single-video',
             plugins_url( 'assets/css/single-video.css', __DIR__ ),
             [],
-            '0.2'
+            '0.4.7'
         );
     }
 }
