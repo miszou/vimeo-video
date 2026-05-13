@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.9
+
+- Automated release.
+
 ## 0.4.8
 
 - Add page attributes support to video posts so the editor can show the Template selector.
