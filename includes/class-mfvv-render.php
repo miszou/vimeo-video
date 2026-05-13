@@ -11,7 +11,7 @@ class MFVV_Render {
             'mfvv-shortcodes-blocks',
             plugins_url( 'assets/css/shortcodes-blocks.css', __DIR__ ),
             [],
-            '0.4.7'
+            '0.4.8'
         );
     }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.8
+
+- Add page attributes support to video posts so the editor can show the Template selector.
+- Allow classic-theme video posts to use selected theme/page templates instead of always forcing the plugin fallback template.
+- Expose the plugin video layout as an explicit selectable template option.
+- Resolve selected theme/page templates correctly on video detail pages.
+
 ## 0.4.7
 
 - Fix single video pages in classic themes such as TheGem by rendering the Vimeo player and recommendations with dynamic blocks instead of dynamic PHP block patterns.

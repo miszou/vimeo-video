@@ -61,9 +61,16 @@ If you use classic content, widgets, or a page builder, you can also paste these
 
 Replace the example number or tag with the video or Media Tag you want to show.
 
+## Overriding the video page template
+
+Video posts support WordPress template selection in classic themes. Edit a video post and use the **Template** selector to choose a theme/page template instead of the plugin's default video layout.
+
+Theme developers can also override all video pages by adding `single-mfvv_video.php` to the active theme or child theme.
+
 ## Good to know
 
 - The plugin works with both block themes and classic themes, including classic themes such as TheGem.
+- Video posts support the editor Template selector, so a theme/page template can override the plugin's default single-video layout.
 - Videos can be assigned to different WordPress authors.
 - Private, password-protected, deleted, or restricted Vimeo videos may not show a thumbnail or player correctly.
 - If Vimeo does not allow a thumbnail to be fetched, set the featured image manually.
