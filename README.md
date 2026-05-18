@@ -67,6 +67,8 @@ Video posts support WordPress template selection in classic themes. Edit a video
 
 When TheGem is active, published templates from **TheGem → Templates Builder** are also listed in the video **Template** selector as **TheGem: Template Name** options.
 
+To apply the same template to multiple videos, go to **Videos**, select the videos, choose **Set template: Template Name** from the bulk actions dropdown, and click **Apply**. Use **Set template: Default** to clear the selected template.
+
 Theme developers can also override all video pages by adding `single-mfvv_video.php` to the active theme or child theme.
 
 ## Good to know

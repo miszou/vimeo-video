@@ -187,7 +187,7 @@ function mfvv_admin_enqueue($hook)
         "mfvv-admin",
         plugins_url("assets/js/admin.js", __FILE__),
         ["wp-data"],
-        "0.4.9",
+        "0.4.10",
         true,
     );
     wp_localize_script("mfvv-admin", "mfvvAdmin", [
@@ -378,44 +378,134 @@ function mfvv_video_admin_column_styles()
 }
 add_action("admin_head", "mfvv_video_admin_column_styles");
 
+function mfvv_get_video_template_bulk_actions()
+{
+    $actions = [
+        "mfvv_set_template_default" => __(
+            "Set template: Default",
+            "mf-vimeo-video",
+        ),
+    ];
+
+    $templates = wp_get_theme()->get_page_templates(null, "mfvv_video");
+
+    foreach ($templates as $template_slug => $template_label) {
+        $action = "mfvv_set_template_" . substr(md5($template_slug), 0, 12);
+        $actions[$action] = sprintf(
+            /* translators: %s: Template name. */
+            __("Set template: %s", "mf-vimeo-video"),
+            $template_label,
+        );
+    }
+
+    return $actions;
+}
+
+function mfvv_get_template_slug_for_bulk_action($action)
+{
+    if ("mfvv_set_template_default" === $action) {
+        return "default";
+    }
+
+    $templates = wp_get_theme()->get_page_templates(null, "mfvv_video");
+
+    foreach ($templates as $slug => $label) {
+        $template_action = "mfvv_set_template_" . substr(md5($slug), 0, 12);
+
+        if ($template_action === $action) {
+            return $slug;
+        }
+    }
+
+    return false;
+}
+
 function mfvv_video_bulk_actions($bulk_actions)
 {
     $bulk_actions["mfvv_fetch_thumbnails"] = __(
         "Fetch Vimeo thumbnails",
         "mf-vimeo-video",
     );
+
+    foreach (mfvv_get_video_template_bulk_actions() as $action => $label) {
+        $bulk_actions[$action] = $label;
+    }
+
     return $bulk_actions;
 }
 add_filter("bulk_actions-edit-mfvv_video", "mfvv_video_bulk_actions");
 
 function mfvv_video_handle_bulk_actions($redirect_url, $action, $post_ids)
 {
-    if ("mfvv_fetch_thumbnails" !== $action) {
+    if ("mfvv_fetch_thumbnails" === $action) {
+        $updated = 0;
+        $failed = 0;
+        $skipped = 0;
+
+        foreach ((array) $post_ids as $post_id) {
+            $post_id = absint($post_id);
+            if (!$post_id || !current_user_can("edit_post", $post_id)) {
+                $skipped++;
+                continue;
+            }
+
+            $vimeo_url = get_post_meta($post_id, "mfvv_vimeo_url", true);
+            if (!$vimeo_url) {
+                $skipped++;
+                continue;
+            }
+
+            $attachment_id = mfvv_fetch_vimeo_thumbnail($post_id, $vimeo_url);
+            if (is_wp_error($attachment_id)) {
+                mfvv_log_thumbnail_error($post_id, $attachment_id);
+                $failed++;
+                continue;
+            }
+
+            $updated++;
+        }
+
+        return add_query_arg(
+            [
+                "mfvv_bulk_thumbnails" => 1,
+                "mfvv_updated" => $updated,
+                "mfvv_failed" => $failed,
+                "mfvv_skipped" => $skipped,
+            ],
+            remove_query_arg(
+                [
+                    "mfvv_bulk_thumbnails",
+                    "mfvv_bulk_template",
+                    "mfvv_updated",
+                    "mfvv_failed",
+                    "mfvv_skipped",
+                ],
+                $redirect_url,
+            ),
+        );
+    }
+
+    $template_slug = mfvv_get_template_slug_for_bulk_action($action);
+
+    if (false === $template_slug) {
         return $redirect_url;
     }
 
     $updated = 0;
-    $failed = 0;
     $skipped = 0;
 
     foreach ((array) $post_ids as $post_id) {
         $post_id = absint($post_id);
+
         if (!$post_id || !current_user_can("edit_post", $post_id)) {
             $skipped++;
             continue;
         }
 
-        $vimeo_url = get_post_meta($post_id, "mfvv_vimeo_url", true);
-        if (!$vimeo_url) {
-            $skipped++;
-            continue;
-        }
-
-        $attachment_id = mfvv_fetch_vimeo_thumbnail($post_id, $vimeo_url);
-        if (is_wp_error($attachment_id)) {
-            mfvv_log_thumbnail_error($post_id, $attachment_id);
-            $failed++;
-            continue;
+        if ("default" === $template_slug) {
+            delete_post_meta($post_id, "_wp_page_template");
+        } else {
+            update_post_meta($post_id, "_wp_page_template", $template_slug);
         }
 
         $updated++;
@@ -423,13 +513,13 @@ function mfvv_video_handle_bulk_actions($redirect_url, $action, $post_ids)
 
     return add_query_arg(
         [
-            "mfvv_bulk_thumbnails" => 1,
+            "mfvv_bulk_template" => 1,
             "mfvv_updated" => $updated,
-            "mfvv_failed" => $failed,
             "mfvv_skipped" => $skipped,
         ],
         remove_query_arg(
             [
+                "mfvv_bulk_template",
                 "mfvv_bulk_thumbnails",
                 "mfvv_updated",
                 "mfvv_failed",
@@ -448,7 +538,10 @@ add_filter(
 
 function mfvv_video_bulk_action_notice()
 {
-    if (empty($_GET["mfvv_bulk_thumbnails"])) {
+    if (
+        empty($_GET["mfvv_bulk_thumbnails"]) &&
+        empty($_GET["mfvv_bulk_template"])
+    ) {
         return;
     }
 
@@ -465,19 +558,30 @@ function mfvv_video_bulk_action_notice()
         ? absint($_GET["mfvv_skipped"])
         : 0;
 
+    if (!empty($_GET["mfvv_bulk_template"])) {
+        $message = sprintf(
+            __(
+                "Video template bulk action complete. Updated: %1$d. Skipped: %2$d.",
+                "mf-vimeo-video",
+            ),
+            $updated,
+            $skipped,
+        );
+    } else {
+        $message = sprintf(
+            __(
+                "Vimeo thumbnail bulk action complete. Updated: %1$d. Failed: %2$d. Skipped: %3$d.",
+                "mf-vimeo-video",
+            ),
+            $updated,
+            $failed,
+            $skipped,
+        );
+    }
+
     printf(
         '<div class="notice notice-info is-dismissible"><p>%s</p></div>',
-        esc_html(
-            sprintf(
-                __(
-                    'Vimeo thumbnail bulk action complete. Updated: %1$d. Failed: %2$d. Skipped: %3$d.',
-                    "mf-vimeo-video",
-                ),
-                $updated,
-                $failed,
-                $skipped,
-            ),
-        ),
+        esc_html($message),
     );
 }
 add_action("admin_notices", "mfvv_video_bulk_action_notice");

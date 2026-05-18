@@ -4,6 +4,7 @@
 
 - List published TheGem Template Builder templates in the Vimeo Video Template selector.
 - Render selected TheGem templates on individual video pages.
+- Add Videos list bulk actions for applying or clearing video page templates across multiple videos.
 
 ## 0.4.9
 

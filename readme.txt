@@ -28,6 +28,7 @@ Features include:
 * Assign video posts to different authors
 * Use with block themes and classic themes
 * Select published TheGem Template Builder templates for individual video pages
+* Apply video page templates to multiple videos with bulk actions
 * Receive plugin updates through Git Updater-compatible metadata
 
 == Installation ==
@@ -76,7 +77,7 @@ Yes. The single video page also works with classic themes through the plugin's f
 
 = How can I override the single video page layout? =
 
-Edit a video post and use the Template selector to choose a theme/page template or a TheGem Template Builder template. Theme developers can also add `single-mfvv_video.php` to the active theme or child theme to override all video detail pages.
+Edit a video post and use the Template selector to choose a theme/page template or a TheGem Template Builder template. To apply a template to multiple videos, select videos on the Videos admin list, choose a "Set template:" bulk action, and click Apply. Theme developers can also add `single-mfvv_video.php` to the active theme or child theme to override all video detail pages.
 
 = Which shortcodes are available? =
 
