@@ -187,7 +187,7 @@ function mfvv_admin_enqueue($hook)
         "mfvv-admin",
         plugins_url("assets/js/admin.js", __FILE__),
         ["wp-data"],
-        "0.4.8",
+        "0.4.9",
         true,
     );
     wp_localize_script("mfvv-admin", "mfvvAdmin", [

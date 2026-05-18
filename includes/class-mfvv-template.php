@@ -7,8 +7,10 @@ if (!defined("ABSPATH")) {
 class MFVV_Template
 {
     const PLUGIN_TEMPLATE_SLUG = "mfvv-plugin-video-template.php";
+    const THEGEM_TEMPLATE_SLUG_PREFIX = "mfvv-thegem-template-";
 
     private static $instance = null;
+    private static $selected_thegem_template_id = 0;
 
     public static function init()
     {
@@ -183,7 +185,60 @@ class MFVV_Template
             }
         }
 
+        foreach ($this->get_thegem_templates() as $template_post) {
+            $slug = $this->get_thegem_template_slug($template_post->ID);
+
+            if (!isset($post_templates[$slug])) {
+                $post_templates[$slug] = sprintf(
+                    /* translators: %s: TheGem template title. */
+                    __("TheGem: %s", "mf-vimeo-video"),
+                    get_the_title($template_post),
+                );
+            }
+        }
+
         return $post_templates;
+    }
+
+    /**
+     * Return published TheGem Template Builder posts, if TheGem is active.
+     */
+    private function get_thegem_templates()
+    {
+        if (!post_type_exists("thegem_templates")) {
+            return [];
+        }
+
+        return get_posts([
+            "post_type" => "thegem_templates",
+            "post_status" => "publish",
+            "numberposts" => -1,
+            "orderby" => "title",
+            "order" => "ASC",
+            "suppress_filters" => false,
+        ]);
+    }
+
+    /**
+     * Build a fake page-template slug for a TheGem Template Builder post.
+     */
+    private function get_thegem_template_slug($template_id)
+    {
+        return self::THEGEM_TEMPLATE_SLUG_PREFIX . absint($template_id) . ".php";
+    }
+
+    /**
+     * Extract a TheGem Template Builder post ID from a selected fake slug.
+     */
+    private function get_thegem_template_id_from_slug($slug)
+    {
+        $pattern = "/^" . preg_quote(self::THEGEM_TEMPLATE_SLUG_PREFIX, "/") . "(\\d+)\\.php$/";
+
+        if (is_string($slug) && preg_match($pattern, $slug, $matches)) {
+            return absint($matches[1]);
+        }
+
+        return 0;
     }
 
     /**
@@ -210,6 +265,26 @@ class MFVV_Template
             return file_exists($plugin_template) ? $plugin_template : $template;
         }
 
+        $thegem_template_id = $this->get_thegem_template_id_from_slug(
+            $selected_template,
+        );
+
+        if ($thegem_template_id) {
+            $thegem_template = get_post($thegem_template_id);
+            $thegem_wrapper =
+                plugin_dir_path(__DIR__) . "templates/thegem-template.php";
+
+            if (
+                $thegem_template &&
+                "thegem_templates" === $thegem_template->post_type &&
+                "publish" === $thegem_template->post_status &&
+                file_exists($thegem_wrapper)
+            ) {
+                self::$selected_thegem_template_id = $thegem_template_id;
+                return $thegem_wrapper;
+            }
+        }
+
         if ($selected_template && "default" !== $selected_template) {
             $theme_template = locate_template([$selected_template]);
             return $theme_template ? $theme_template : $template;
@@ -228,6 +303,47 @@ class MFVV_Template
         }
 
         return $template;
+    }
+
+    /**
+     * Get the TheGem Template Builder post selected for the current video.
+     */
+    public static function get_selected_thegem_template_id()
+    {
+        return self::$selected_thegem_template_id;
+    }
+
+    /**
+     * Render a selected TheGem Template Builder post in the current video context.
+     */
+    public static function render_selected_thegem_template()
+    {
+        $template_id = self::get_selected_thegem_template_id();
+
+        if (!$template_id) {
+            return false;
+        }
+
+        $template_post = get_post($template_id);
+
+        if (
+            !$template_post ||
+            "thegem_templates" !== $template_post->post_type ||
+            "publish" !== $template_post->post_status
+        ) {
+            return false;
+        }
+
+        if (did_action("elementor/loaded") && class_exists("\\Elementor\\Plugin")) {
+            echo \Elementor\Plugin::instance()->frontend->get_builder_content_for_display(
+                $template_id,
+                true,
+            );
+            return true;
+        }
+
+        echo apply_filters("the_content", $template_post->post_content);
+        return true;
     }
 
     public function register_patterns()

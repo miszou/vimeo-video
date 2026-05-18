@@ -27,6 +27,7 @@ Features include:
 * Control Single Vimeo Video block width, height, and stretch-to-container display
 * Assign video posts to different authors
 * Use with block themes and classic themes
+* Select published TheGem Template Builder templates for individual video pages
 * Receive plugin updates through Git Updater-compatible metadata
 
 == Installation ==
@@ -71,11 +72,11 @@ Yes. The plugin works with the WordPress block editor, includes a single video l
 
 = Does this work with classic themes? =
 
-Yes. The single video page also works with classic themes through the plugin's fallback template. The fallback renders the Vimeo player and related videos through dynamic blocks for compatibility with classic themes such as TheGem. Video posts support the editor Template selector, so you can choose a theme/page template instead of the plugin layout when your theme provides one.
+Yes. The single video page also works with classic themes through the plugin's fallback template. The fallback renders the Vimeo player and related videos through dynamic blocks for compatibility with classic themes such as TheGem. Video posts support the editor Template selector, so you can choose a theme/page template instead of the plugin layout when your theme provides one. When TheGem is active, published TheGem Template Builder templates appear as selectable "TheGem:" options.
 
 = How can I override the single video page layout? =
 
-Edit a video post and use the Template selector to choose a theme/page template. Theme developers can also add `single-mfvv_video.php` to the active theme or child theme to override all video detail pages.
+Edit a video post and use the Template selector to choose a theme/page template or a TheGem Template Builder template. Theme developers can also add `single-mfvv_video.php` to the active theme or child theme to override all video detail pages.
 
 = Which shortcodes are available? =
 

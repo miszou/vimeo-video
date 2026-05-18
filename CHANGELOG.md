@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.10
+
+- List published TheGem Template Builder templates in the Vimeo Video Template selector.
+- Render selected TheGem templates on individual video pages.
+
 ## 0.4.9
 
 - Automated release.
