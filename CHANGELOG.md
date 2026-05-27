@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.11
+
+- Automated release.
+
 ## Unreleased
 
 - Preserve TheGem's single-page wrapper for default video pages so TheGem Page Options, including Content Layout settings, can control the surrounding layout.
