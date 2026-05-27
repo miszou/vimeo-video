@@ -65,7 +65,7 @@ Replace the example number or tag with the video or Media Tag you want to show.
 
 Video posts support WordPress template selection in classic themes. Edit a video post and use the **Template** selector to choose a theme/page template instead of the plugin's default video layout.
 
-When TheGem is active, published templates from **TheGem → Templates Builder** are also listed in the video **Template** selector as **TheGem: Template Name** options.
+When TheGem is active, the plugin keeps TheGem's single-page wrapper in control for the default video template, so **TheGem → Page Options → Content Layout** settings such as built-in layout, template-builder layout, content padding, and sidebar options can override the surrounding page layout while the video player/recommendations remain in the content area. Published templates from **TheGem → Templates Builder** are also listed in the video **Template** selector as **TheGem: Template Name** options.
 
 To apply the same template to multiple videos, go to **Videos**, select the videos, choose **Set template: Template Name** from the bulk actions dropdown, and click **Apply**. Use **Set template: Default** to clear the selected template.
 
@@ -74,7 +74,7 @@ Theme developers can also override all video pages by adding `single-mfvv_video.
 ## Good to know
 
 - The plugin works with both block themes and classic themes, including classic themes such as TheGem.
-- Video posts support the editor Template selector, so a theme/page template or TheGem Template Builder template can override the plugin's default single-video layout.
+- Video posts support the editor Template selector, and TheGem Page Options can override the surrounding content layout for the default video template.
 - Videos can be assigned to different WordPress authors.
 - Private, password-protected, deleted, or restricted Vimeo videos may not show a thumbnail or player correctly.
 - If Vimeo does not allow a thumbnail to be fetched, set the featured image manually.

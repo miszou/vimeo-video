@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Preserve TheGem's single-page wrapper for default video pages so TheGem Page Options, including Content Layout settings, can control the surrounding layout.
+
 ## 0.4.10
 
 - List published TheGem Template Builder templates in the Vimeo Video Template selector.

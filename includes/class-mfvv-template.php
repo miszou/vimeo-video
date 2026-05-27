@@ -11,6 +11,7 @@ class MFVV_Template
 
     private static $instance = null;
     private static $selected_thegem_template_id = 0;
+    private static $defer_to_theme_single_template = false;
 
     public static function init()
     {
@@ -40,6 +41,7 @@ class MFVV_Template
 
         // Classic theme fallback: use template_include to load PHP wrapper.
         add_filter("template_include", [$this, "classic_template_fallback"]);
+        add_filter("the_content", [$this, "maybe_render_theme_wrapped_video_content"], 11);
     }
 
     /**
@@ -298,11 +300,103 @@ class MFVV_Template
             return $template;
         }
 
+        if ($this->should_defer_to_theme_single_template($template)) {
+            self::$defer_to_theme_single_template = true;
+            return $template;
+        }
+
         if (file_exists($plugin_template)) {
             return $plugin_template;
         }
 
         return $template;
+    }
+
+    /**
+     * Decide whether the active classic theme should keep control of the single
+     * wrapper so its page/template options can override the video content area.
+     */
+    private function should_defer_to_theme_single_template($template)
+    {
+        if (!$template || !file_exists($template)) {
+            return false;
+        }
+
+        $theme = wp_get_theme();
+        $theme_names = array_filter([
+            $theme ? $theme->get("Name") : "",
+            $theme ? $theme->get_template() : "",
+            $theme ? $theme->get_stylesheet() : "",
+        ]);
+
+        $is_thegem = false;
+        foreach ($theme_names as $theme_name) {
+            if (false !== stripos($theme_name, "thegem")) {
+                $is_thegem = true;
+                break;
+            }
+        }
+
+        /**
+         * Allow themes to keep their single template wrapper for mfvv_video.
+         *
+         * Returning true lets theme settings such as TheGem Page Options →
+         * Content Layout control the page chrome while this plugin replaces
+         * only the main post content with the video layout.
+         *
+         * @param bool   $defer    Whether to defer to the theme template.
+         * @param string $template Current resolved template path.
+         */
+        return (bool) apply_filters(
+            "mfvv_defer_to_theme_single_template",
+            $is_thegem,
+            $template,
+        );
+    }
+
+    /**
+     * Replace the post body with the plugin video layout while preserving the
+     * surrounding theme template selected by theme/page options.
+     */
+    public function maybe_render_theme_wrapped_video_content($content)
+    {
+        if (
+            !self::$defer_to_theme_single_template ||
+            !is_singular("mfvv_video") ||
+            !in_the_loop() ||
+            !is_main_query()
+        ) {
+            return $content;
+        }
+
+        return $this->render_video_template_content($content);
+    }
+
+    /**
+     * Render the block-template body for use inside a classic theme wrapper.
+     */
+    private function render_video_template_content($post_content = "")
+    {
+        $template_file =
+            plugin_dir_path(__DIR__) . "templates/single-mfvv_video.html";
+
+        if (!file_exists($template_file)) {
+            return $post_content;
+        }
+
+        $content = file_get_contents($template_file);
+        $content = preg_replace(
+            '/<!--\s*wp:template-part\s*\{[^}]*"slug"\s*:\s*"(header|footer)"[^}]*\}\s*\/-->/i',
+            "",
+            $content,
+        );
+        $content = preg_replace(
+            '/<!--\s*wp:post-content\b.*?\/-->/is',
+            $post_content,
+            $content,
+        );
+
+        return do_blocks($content);
     }
 
     /**
